@@ -25,6 +25,11 @@ b {
 	color: #375EAB;
 }
 
+div.loggedUser {
+	text-align: right;
+	font-size: 10pt;
+}
+
 div.topbar {
 	background-color: #E0EBF5;
 	padding: 0.5em;
@@ -43,6 +48,13 @@ div.footer {
 <body>
 <div class="topbar">
 <h1>Genex: Go <b>Gen</b>erics <b>Ex</b>change</h1>
+
+<div class="loggedUser">
+{{if .}} Logged as: {{.Email}} (<a href="/login">logout</a>)
+{{else}} Not logged in (<a href="/login">login here</a>)
+{{end}}
+</div>
+
 </div>
 <div class="intro">
 As of now (<a href="http://golang.org">Go 1</a>) does not support Generics within your Go code.<p/>
@@ -58,6 +70,8 @@ Genex is a Go Generics Exchange developer helper tool. It has 2 main components:
 </ol>
 
 Just browse, upload, maintain or retrieve the generic snippets you want...<p/>
+
+You may  to upload or modify your own generic snippets.<p/>
 
 {GenexList}
 
