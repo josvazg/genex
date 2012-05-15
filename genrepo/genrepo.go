@@ -2,16 +2,18 @@ package genrepo
 
 import (
 	"appengine"
-	"appengine/user"
+	"appengine/datastore"
+    "appengine/user"
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 )
 
-var templates = template.Must(template.ParseFiles("genrepo/browse.html"))
+var templates = template.Must(template.ParseFiles("genrepo/browse.html" /*"genrepo/snippets.html"*/))
 
 func init() {
-	http.HandleFunc("/login",login)
+    http.HandleFunc("/login", login)
     http.HandleFunc("/", browse)
 }
 
@@ -21,9 +23,10 @@ const (
 )
 
 type GenericSnippet struct {
-	name, desc string
-	genType int
-	code string
+    Name, Desc string
+    GenType    int
+    Code       string
+    Date       time.Time
 }
 
 type Genex interface {
@@ -36,8 +39,26 @@ type Genex interface {
 func browse(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
     u := user.Current(c)
-    fmt.Println("u=",u)
-	err := templates.ExecuteTemplate(w, "browse.html", u)
+    fmt.Println("u=", u)
+
+    gs := &GenericSnippet{"a", "-", Any, "nothing yet", time.Now()}
+    fmt.Println("gs=", gs)
+    _, err := datastore.Put(c, datastore.NewIncompleteKey(c, "GenericSnippet", nil), gs)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    fmt.Println("*gs=", gs)
+
+    q := datastore.NewQuery("GenericSnippet").Order("-Name").Limit(10)
+    gss := make([]GenericSnippet, 0, 10)
+    if _, err := q.GetAll(c, &gss); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    fmt.Println("gss=", gss)
+
+    err = templates.ExecuteTemplate(w, "browse.html", u)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
@@ -47,13 +68,15 @@ func login(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	url, err := user.LoginURL(c, "/")
     if err != nil {
-      	http.Error(w, err.Error(), http.StatusInternalServerError)
+        http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
-    fmt.Println("url=",url)
+
+    fmt.Println("url=", url)
     w.Header().Set("Location", url)
 	w.WriteHeader(http.StatusFound)
 }
+
 /*
 func LoggedUser() string {
 	return "-"
