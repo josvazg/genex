@@ -1,0 +1,30 @@
+{{template "htmlheader"}}
+
+{{if .User}} 
+<div class="toolbar">
+<a href="/add">Add Generic Snippet</a> as {{.User.Email}}
+</div>
+{{end}}
+
+<div class="intro">
+As of now (<a href="http://golang.org">Go 1</a>) does not support Generics within your Go code.<p/>
+
+There are <a href="http://research.swtch.com/generic">very good reasons</a> for that, 
+but while a solution is found to this dilema, programmers could use a little help avoiding generic code 
+workarounds that end up in repetitive and error prone coding tasks or lower performance.<p/>
+
+Genex is a Go Generics Exchange tool. It has 2 main components:<br/>
+<ol>
+<li value="1">This Generics code snippets repository.</li>
+<li>A command line tool to download snippets expanded with your favorite types within your code.</li>
+</ol>
+
+Just browse and retrieve the generic snippets you want... You may want to add, upload or modify your own generic snippets, for that you will need to <a href="/login">login</a> with your Google account.<p/>
+</div>
+
+<div class="list">
+{{if .List }}  Showing {{ .List }} Generic Snippets
+{{else}} <div class="warn">No Generic Snippets Found!</div>
+{{end}}
+</div>
+{{template "htmlfooter"}}

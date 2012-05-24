@@ -10,10 +10,12 @@ import (
 	"time"
 )
 
-var templates = template.Must(template.ParseFiles("genrepo/browse.html" /*"genrepo/snippets.html"*/))
+var templates = template.Must(template.ParseFiles("html/browse.html", "html/add.html",
+    "html/templates.html","html/style.css"))
 
 func init() {
     http.HandleFunc("/login", login)
+    http.HandleFunc("/add",add)
     http.HandleFunc("/", browse)
 }
 
@@ -22,7 +24,7 @@ const (
 	Any                   // Any type is suitable to expand the generic code, primitive operators are not used
 )
 
-type GenericSnippet struct {
+type GenSnippet struct {
     Name, Desc string
     GenType    int
     Code       string
@@ -30,35 +32,38 @@ type GenericSnippet struct {
 }
 
 type Genex interface {
-	list() []GenericSnippet
-	get(name string) GenericSnippet
-	put(gen GenericSnippet)
+	list() []GenSnippet
+	get(name string) GenSnippet
+	put(gen GenSnippet)
 	remove(name string)
+}
+
+type BrowsePage struct {
+    User *user.User
+    List []GenSnippet
 }
 
 func browse(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-    u := user.Current(c)
-    fmt.Println("u=", u)
+    pg := &BrowsePage{user.Current(c), make([]GenSnippet, 0, 10)}
 
-    gs := &GenericSnippet{"a", "-", Any, "nothing yet", time.Now()}
-    fmt.Println("gs=", gs)
-    _, err := datastore.Put(c, datastore.NewIncompleteKey(c, "GenericSnippet", nil), gs)
+    q := datastore.NewQuery("GenSnippet").Order("-Name").Limit(10)
+    if _, err := q.GetAll(c, &pg.List); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    fmt.Println("pg.List=", pg.List)
+
+    err := templates.ExecuteTemplate(w, "browse.html", pg)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
     }
-    fmt.Println("*gs=", gs)
+}
 
-    q := datastore.NewQuery("GenericSnippet").Order("-Name").Limit(10)
-    gss := make([]GenericSnippet, 0, 10)
-    if _, err := q.GetAll(c, &gss); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    fmt.Println("gss=", gss)
+func add(w http.ResponseWriter, r *http.Request) {
+    //c := appengine.NewContext(r)
 
-    err = templates.ExecuteTemplate(w, "browse.html", u)
+    err := templates.ExecuteTemplate(w, "add.html", nil)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
